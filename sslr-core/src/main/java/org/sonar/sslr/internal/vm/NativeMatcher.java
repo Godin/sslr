@@ -19,11 +19,9 @@
  */
 package org.sonar.sslr.internal.vm;
 
-import org.sonar.sslr.internal.matchers.Matcher;
+public abstract class NativeMatcher extends AbstractCompilableMatcher {
 
-public interface NativeMatcher extends Matcher {
-
-  public boolean execute(NativeMatcherContext context);
+  public abstract boolean execute(NativeMatcherContext context);
 
   public interface NativeMatcherContext extends CharSequence {
 

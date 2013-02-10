@@ -19,12 +19,10 @@
  */
 package org.sonar.sslr.internal.matchers;
 
-import org.sonar.sslr.internal.vm.AbstractCompilableMatcher;
-import org.sonar.sslr.internal.vm.CompilableMatcher;
 import org.sonar.sslr.internal.vm.Instr;
 import org.sonar.sslr.internal.vm.NativeMatcher;
 
-public class StringMatcher extends AbstractCompilableMatcher implements Matcher, CompilableMatcher, NativeMatcher {
+public class StringMatcher extends NativeMatcher implements Matcher {
 
   private final String string;
 

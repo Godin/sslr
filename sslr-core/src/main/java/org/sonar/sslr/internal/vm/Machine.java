@@ -22,16 +22,20 @@ package org.sonar.sslr.internal.vm;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.sonar.sslr.grammar.GrammarException;
+import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.internal.matchers.Matcher;
 import org.sonar.sslr.internal.matchers.ParseNode;
 import org.sonar.sslr.internal.vm.NativeMatcher.NativeMatcherContext;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class Machine implements NativeMatcherContext {
 
   private final char[] input;
   private final Instr[] instructions;
+
+  private final int[] calls;
 
   private int index;
   private boolean running;
@@ -46,6 +50,14 @@ public class Machine implements NativeMatcherContext {
   public Machine(char[] input, Instr[] instructions) {
     this.input = input;
     this.instructions = instructions;
+    this.calls = new int[instructions.length];
+    Arrays.fill(calls, -1);
+
+    stack = new StackElement(null);
+
+    index = 0;
+    address = 0;
+    running = true;
   }
 
   private StackElement stack;
@@ -59,6 +71,7 @@ public class Machine implements NativeMatcherContext {
     public int address;
     public int index;
     public AbstractCompilableMatcher matcher;
+    public int leftRecursion;
 
     public StackElement(StackElement parent) {
       this.parent = parent;
@@ -90,94 +103,113 @@ public class Machine implements NativeMatcherContext {
     stack.matcher = null;
   }
 
+  private void popReturn() {
+    int calledAddress = stack.address - 1 + instructions[stack.address - 1].getOffset();
+    calls[calledAddress] = stack.leftRecursion;
+  }
+
+  /**
+   * Executes one instruction.
+   */
+  public void executeInstruction() {
+    Instr instruction = instructions[address];
+    switch (instruction.getOpcode()) {
+      case CALL:
+        pushReturn(address + 1, instruction.getMatcher());
+        address += instruction.getOffset();
+
+        if (calls[address] == index) {
+          GrammarRuleKey ruleKey = ((RuleExpression) instruction.getMatcher()).getRuleKey();
+          throw new GrammarException("Left recursion has been detected, involved rule: " + ruleKey);
+        }
+        stack.leftRecursion = calls[address];
+        calls[address] = index;
+
+        break;
+      case RETURN:
+        // return from rule, so should create node
+        createNode();
+
+        popReturn();
+
+        address = stack.address;
+        stack = stack.parent;
+
+        break;
+      case NATIVE_CALL:
+        NativeMatcher matcher = (NativeMatcher) instruction.getMatcher();
+        if (matcher.execute(this)) {
+          address++;
+          // all native matchers (String, Pattern) should create node
+          createNode(matcher);
+        } else {
+          fail();
+        }
+        break;
+      case END_OF_INPUT:
+        if (index == input.length) {
+          address++;
+        } else {
+          fail();
+        }
+        break;
+      case CHOICE:
+        pushBacktrack(address + instruction.getOffset());
+        address++;
+        break;
+      case COMMIT_VERIFY:
+        if (stack.parent.index == index) {
+          throw new GrammarException("The inner part of ZeroOrMore must not allow empty matches");
+        }
+      case COMMIT:
+        // Preconditions.checkState(stack.isBacktrack()); // should be always backtrack
+
+        // should contribute all created nodes to parent
+        stack.parent.subNodes.addAll(stack.subNodes);
+
+        stack = stack.parent;
+        address += instruction.getOffset();
+        break;
+      case FAIL:
+        fail();
+        break;
+      case FAIL_TWICE:
+        // remove pending alternative pushed by Choice instruction
+        stack = stack.parent;
+        fail();
+        break;
+      case BACK_COMMIT:
+        // restore state
+        index = stack.index;
+        stack = stack.parent;
+        // jump
+        address += instruction.getOffset();
+        break;
+      case JUMP:
+        address += instruction.getOffset();
+        break;
+      case END:
+        result = true;
+        running = false;
+        break;
+      case CHAR:
+        char ch = (char) instruction.getOffset();
+        if (index < input.length && input[index] == ch) {
+          index++;
+          address++;
+          createNode(instruction.getMatcher());
+        } else {
+          fail();
+        }
+        break;
+      default:
+        throw new UnsupportedOperationException();
+    }
+  }
+
   public boolean execute() {
-    stack = new StackElement(null);
-
-    index = 0;
-    address = 0;
-    running = true;
     while (running) {
-      Instr instruction = instructions[address];
-      switch (instruction.getOpcode()) {
-        case CALL:
-          pushReturn(address + 1, instruction.getMatcher());
-          address += instruction.getOffset();
-          break;
-        case RETURN:
-          // return from rule, so should create node
-          createNode();
-
-          address = stack.address;
-          stack = stack.parent;
-          break;
-        case NATIVE_CALL:
-          NativeMatcher matcher = (NativeMatcher) instruction.getMatcher();
-          if (matcher.execute(this)) {
-            address++;
-            // all native matchers (String, Pattern) should create node
-            createNode(matcher);
-          } else {
-            fail();
-          }
-          break;
-        case END_OF_INPUT:
-          if (index != input.length) {
-            fail();
-          }
-          address++;
-          break;
-        case CHOICE:
-          pushBacktrack(address + instruction.getOffset());
-          address++;
-          break;
-        case COMMIT_VERIFY:
-          if (stack.parent.index == index) {
-            throw new GrammarException("The inner part of ZeroOrMore must not allow empty matches");
-          }
-        case COMMIT:
-          // Preconditions.checkState(stack.isBacktrack()); // should be always backtrack
-
-          // should contribute all created nodes to parent
-          stack.parent.subNodes.addAll(stack.subNodes);
-
-          stack = stack.parent;
-          address += instruction.getOffset();
-          break;
-        case FAIL:
-          fail();
-          break;
-        case FAIL_TWICE:
-          // remove pending alternative pushed by Choice instruction
-          stack = stack.parent;
-          fail();
-          break;
-        case BACK_COMMIT:
-          // restore state
-          index = stack.index;
-          stack = stack.parent;
-          // jump
-          address += instruction.getOffset();
-          break;
-        case JUMP:
-          address += instruction.getOffset();
-          break;
-        case END:
-          running = false;
-          result = true;
-          break;
-        case CHAR:
-          char ch = (char) instruction.getOffset();
-          if (index < input.length && input[index] == ch) {
-            index++;
-            address++;
-            createNode(instruction.getMatcher());
-          } else {
-            fail();
-          }
-          break;
-        default:
-          throw new UnsupportedOperationException();
-      }
+      executeInstruction();
     }
     return result;
   }
@@ -195,6 +227,8 @@ public class Machine implements NativeMatcherContext {
   private void fail() {
     // pop any return addresses from the top of the stack
     while (!stack.isBacktrack()) {
+      popReturn();
+
       stack = stack.parent;
     }
     if (stack.parent == null) {
@@ -228,6 +262,18 @@ public class Machine implements NativeMatcherContext {
 
   public ParseNode getNode() {
     return stack.subNodes.get(0);
+  }
+
+  public int getAddress() {
+    return address;
+  }
+
+  public boolean isResult() {
+    return result;
+  }
+
+  public boolean isRunning() {
+    return running;
   }
 
 }

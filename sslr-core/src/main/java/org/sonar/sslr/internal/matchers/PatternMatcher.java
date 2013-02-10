@@ -20,14 +20,12 @@
 package org.sonar.sslr.internal.matchers;
 
 import org.sonar.sslr.grammar.GrammarException;
-import org.sonar.sslr.internal.vm.AbstractCompilableMatcher;
-import org.sonar.sslr.internal.vm.CompilableMatcher;
 import org.sonar.sslr.internal.vm.Instr;
 import org.sonar.sslr.internal.vm.NativeMatcher;
 
 import java.util.regex.Pattern;
 
-public class PatternMatcher extends AbstractCompilableMatcher implements Matcher, CompilableMatcher, NativeMatcher {
+public class PatternMatcher extends NativeMatcher implements Matcher {
 
   private final java.util.regex.Matcher matcher;
 
