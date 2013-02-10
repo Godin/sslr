@@ -23,6 +23,7 @@ import com.sonar.sslr.api.TokenType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.sslr.grammar.GrammarException;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.internal.matchers.EndOfInputMatcher;
 import org.sonar.sslr.internal.matchers.FirstOfMatcher;
@@ -96,6 +97,27 @@ public class VmGrammarBuilderTest {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("Incorrect type of parsing expression: class java.lang.Object");
     VmGrammarBuilder.convertToExpression(new Object());
+  }
+
+  @Test
+  public void test_undefined_rule() {
+    VmGrammarBuilder b = VmGrammarBuilder.create();
+    GrammarRuleKey ruleKey = mock(GrammarRuleKey.class);
+    b.rule(ruleKey);
+    thrown.expect(GrammarException.class);
+    thrown.expectMessage("The rule '" + ruleKey + "' hasn't beed defined.");
+    b.build();
+  }
+
+  @Test
+  public void test_used_undefined_rule() {
+    VmGrammarBuilder b = VmGrammarBuilder.create();
+    GrammarRuleKey ruleKey1 = mock(GrammarRuleKey.class);
+    GrammarRuleKey ruleKey2 = mock(GrammarRuleKey.class);
+    b.rule(ruleKey1).is(ruleKey2);
+    thrown.expect(GrammarException.class);
+    thrown.expectMessage("The rule " + ruleKey2 + " has been used somewhere in grammar, but not defined.");
+    b.build();
   }
 
 }

@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sonar.sslr.api.TokenType;
 import com.sonar.sslr.api.Trivia.TriviaKind;
+import org.sonar.sslr.grammar.GrammarException;
 import org.sonar.sslr.grammar.GrammarRuleBuilder;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.internal.matchers.EndOfInputMatcher;
@@ -87,6 +88,9 @@ public class VmGrammarBuilder {
       if (result[i].getOpcode() == Opcode.OPEN_CALL) {
         RuleRefExpression matcher = (RuleRefExpression) instruction.getMatcher();
         GrammarRuleKey ruleKey = matcher.getRuleKey();
+        if (!offsets.containsKey(ruleKey)) {
+          throw new GrammarException("The rule " + ruleKey + " has been used somewhere in grammar, but not defined.");
+        }
         offset = offsets.get(ruleKey);
         result[i] = Instr.call(offset - i, rules.get(ruleKey));
       }
