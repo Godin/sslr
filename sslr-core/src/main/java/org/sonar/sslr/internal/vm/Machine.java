@@ -35,6 +35,10 @@ public class Machine implements NativeMatcherContext {
   private final char[] input;
   private final Instr[] instructions;
 
+  // TODO check what is cheaper (space-time tradeoff):
+  // 1. allocate big array of all possible addresses
+  // 2. relocate calls to the top of list of instructions using instruction "Jump"
+  // 3. use Map from GrammarRuleKey
   private final int[] calls;
 
   private int index;
