@@ -19,13 +19,15 @@
  */
 package org.sonar.sslr.internal.vm;
 
+import org.sonar.sslr.internal.vm.Instr.Opcode;
+
 public class InstructionsFormatter {
 
   public String format(Instr[] instructions) {
     int label = 0;
     int[] labels = new int[instructions.length];
     for (int i = 0; i < instructions.length; i++) {
-      if (instructions[i].getOffset() != 0) {
+      if (instructions[i].getOpcode() != Opcode.CHAR && instructions[i].getOffset() != 0) {
         int j = i + instructions[i].getOffset();
         if (labels[j] == 0) {
           label++;
@@ -40,6 +42,7 @@ public class InstructionsFormatter {
     String labelFormat = "L%1$" + padding + "d: ";
 
     for (int i = 0; i < instructions.length; i++) {
+      Instr instruction = instructions[i];
       if (labels[i] != 0) {
         sb.append(String.format(labelFormat, labels[i]));
       } else {
@@ -48,7 +51,9 @@ public class InstructionsFormatter {
         }
       }
       sb.append(instructions[i].getOpcode());
-      if (instructions[i].getOffset() != 0) {
+      if (instruction.getOpcode() == Opcode.CHAR) {
+        sb.append(' ').append((char) instruction.getOffset());
+      } else if (instructions[i].getOffset() != 0) {
         int j = i + instructions[i].getOffset();
         sb.append(" L").append(labels[j]);
       }

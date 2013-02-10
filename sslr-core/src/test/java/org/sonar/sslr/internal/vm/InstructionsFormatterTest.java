@@ -28,12 +28,13 @@ public class InstructionsFormatterTest {
   @Test
   public void test() {
     InstructionsFormatter formatter = new InstructionsFormatter();
-    Instr[] instructions = new Instr[] {Instr.jump(3), Instr.jump(2), Instr.jump(-1), Instr.end()};
+    Instr[] instructions = new Instr[] {Instr.jump(3), Instr.jump(2), Instr.jump(-1), Instr.ch('a', null), Instr.end()};
     String expected = new StringBuilder()
         .append("    JUMP L1\n")
         .append("L2: JUMP L1\n")
         .append("    JUMP L2\n")
-        .append("L1: END\n")
+        .append("L1: CHAR a\n")
+        .append("    END\n")
         .toString();
     assertThat(formatter.format(instructions)).isEqualTo(expected);
   }
