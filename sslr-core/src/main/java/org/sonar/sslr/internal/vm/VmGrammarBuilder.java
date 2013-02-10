@@ -37,7 +37,6 @@ import org.sonar.sslr.internal.matchers.SequenceMatcher;
 import org.sonar.sslr.internal.matchers.StringMatcher;
 import org.sonar.sslr.internal.matchers.TestMatcher;
 import org.sonar.sslr.internal.matchers.TestNotMatcher;
-import org.sonar.sslr.internal.matchers.TokenMatcher;
 import org.sonar.sslr.internal.matchers.TriviaMatcher;
 import org.sonar.sslr.internal.matchers.ZeroOrMoreMatcher;
 import org.sonar.sslr.internal.vm.Instr.Opcode;
@@ -168,7 +167,8 @@ public class VmGrammarBuilder {
   }
 
   public Object token(TokenType tokenType, Object e) {
-    return new TokenMatcher(tokenType, convertToExpression(e));
+    // TODO there is no need to use TokenMatcher with new Grammar API (SSLR-284)
+    return convertToExpression(e);
   }
 
   public Object commentTrivia(Object e) {

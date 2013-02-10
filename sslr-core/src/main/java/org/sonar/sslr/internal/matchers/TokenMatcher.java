@@ -46,24 +46,9 @@ public class TokenMatcher extends AbstractCompilableMatcher implements Matcher {
     return tokenType;
   }
 
-  /**
-   * Compiles this expression into a set of instructions:
-   * <pre>
-   * Call L1
-   * Jump L2
-   * L1: subExpression
-   * Return
-   * L2: ...
-   * </pre>
-   */
   public Instr[] compile() {
-    Instr[] instr = subMatcher.compile();
-    Instr[] result = new Instr[instr.length + 3];
-    result[0] = Instr.call(2, this);
-    result[1] = Instr.jump(instr.length + 2);
-    System.arraycopy(instr, 0, result, 2, instr.length);
-    result[instr.length + 2] = Instr.ret();
-    return result;
+    // TODO there is no need to use TokenMatcher with new Grammar API (SSLR-284)
+    throw new UnsupportedOperationException();
   }
 
 }

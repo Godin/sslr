@@ -19,7 +19,6 @@
  */
 package org.sonar.sslr.internal.vm;
 
-import com.sonar.sslr.api.TokenType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -36,7 +35,6 @@ import org.sonar.sslr.internal.matchers.SequenceMatcher;
 import org.sonar.sslr.internal.matchers.StringMatcher;
 import org.sonar.sslr.internal.matchers.TestMatcher;
 import org.sonar.sslr.internal.matchers.TestNotMatcher;
-import org.sonar.sslr.internal.matchers.TokenMatcher;
 import org.sonar.sslr.internal.matchers.TriviaMatcher;
 import org.sonar.sslr.internal.matchers.ZeroOrMoreMatcher;
 
@@ -87,7 +85,6 @@ public class VmGrammarBuilderTest {
 
     assertThat(b.endOfInput()).isInstanceOf(EndOfInputMatcher.class);
 
-    assertThat(b.token(mock(TokenType.class), e1)).isInstanceOf(TokenMatcher.class);
     assertThat(b.commentTrivia(e1)).isInstanceOf(TriviaMatcher.class);
     assertThat(b.skippedTrivia(e1)).isInstanceOf(TriviaMatcher.class);
   }
