@@ -19,6 +19,11 @@
  */
 package org.sonar.sslr.internal.matchers;
 
+import com.google.common.collect.Lists;
+import org.sonar.sslr.internal.vm.Instr;
+
+import java.util.List;
+
 /**
  * A {@link Matcher} trying all of its submatchers in sequence.
  * Succeeds when the first submatcher succeeds.
@@ -39,6 +44,58 @@ public class FirstOfMatcher implements Matcher {
       }
     }
     return false;
+  }
+
+  /**
+   * <pre>
+   * Choice L1
+   * subExpression[0]
+   * Commit E
+   * L1: Choice L2
+   * subExpression[1]
+   * Commit E
+   * L2: Choice L3
+   * subExpression[2]
+   * Commit E
+   * L3: subExpression[3]
+   * E: ...
+   * </pre>
+   */
+  public Instr[] compile() {
+    int[] offsets = new int[subMatchers.length - 1];
+    List<Instr> result = Lists.newArrayList();
+    for (int i = 0; i < subMatchers.length - 1; i++) {
+      // add placeholder for "Choice"
+      result.add(null);
+      // add program
+      addAll(result, subMatchers[i].compile());
+      // add placeholder for "Commit"
+      result.add(null);
+      offsets[i] = result.size();
+    }
+    // add last program
+    addAll(result, subMatchers[subMatchers.length - 1].compile());
+
+    // replace placholders
+    int index = 0;
+    for (int i = 0; i < subMatchers.length - 1; i++) {
+      while (result.get(index) != null) {
+        index++;
+      }
+      result.set(index, Instr.choice(offsets[i] - index));
+      while (result.get(index) != null) {
+        index++;
+      }
+      result.set(index, Instr.commit(result.size() - index));
+    }
+
+    return result.toArray(new Instr[result.size()]);
+  }
+
+  private static void addAll(List<Instr> list, Instr[] array) {
+    for (Instr i : array) {
+      list.add(i);
+    }
   }
 
 }

@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.vm;
 
 import org.junit.Test;
+import org.sonar.sslr.internal.matchers.EndOfInputMatcher;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -27,7 +28,7 @@ public class EndOfInputExpressionTest {
 
   @Test
   public void test() {
-    Instr[] instructions = Instr.appendEnd(new EndOfInputExpression().compile());
+    Instr[] instructions = Instr.appendEnd(new EndOfInputMatcher().compile());
     assertThat(new Machine("", instructions).execute()).isTrue();
     assertThat(new Machine("a", instructions).execute()).isFalse();
   }

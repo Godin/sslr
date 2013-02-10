@@ -19,7 +19,9 @@
  */
 package org.sonar.sslr.internal.matchers;
 
-public interface Matcher {
+import org.sonar.sslr.internal.vm.CompilableMatcher;
+
+public interface Matcher extends CompilableMatcher {
 
   /**
    * @return true if the match was successful

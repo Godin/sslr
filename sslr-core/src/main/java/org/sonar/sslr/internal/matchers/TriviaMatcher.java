@@ -20,8 +20,10 @@
 package org.sonar.sslr.internal.matchers;
 
 import com.sonar.sslr.api.Trivia.TriviaKind;
+import org.sonar.sslr.internal.vm.AbstractCompilableMatcher;
+import org.sonar.sslr.internal.vm.Instr;
 
-public class TriviaMatcher implements Matcher {
+public class TriviaMatcher extends AbstractCompilableMatcher implements Matcher {
 
   private final Matcher subMatcher;
   private final TriviaKind triviaKind;
@@ -42,6 +44,25 @@ public class TriviaMatcher implements Matcher {
 
   public TriviaKind getTriviaKind() {
     return triviaKind;
+  }
+
+  /**
+   * Call L1
+   * Jump L2
+   * L1: subExpression
+   * Return
+   * L2: ...
+   */
+  public Instr[] compile() {
+    return subMatcher.compile();
+    // FIXME
+    // Instr[] instr = subMatcher.compile();
+    // Instr[] result = new Instr[instr.length + 3];
+    // result[0] = Instr.call(2, this);
+    // result[1] = Instr.jump(result.length + 2);
+    // System.arraycopy(instr, 0, result, 2, instr.length);
+    // result[instr.length + 2] = Instr.ret();
+    // return result;
   }
 
 }

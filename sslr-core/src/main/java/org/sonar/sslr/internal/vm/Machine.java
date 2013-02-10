@@ -99,9 +99,6 @@ public class Machine implements NativeMatcherContext {
     while (running) {
       Instr instruction = instructions[address];
       switch (instruction.getOpcode()) {
-        case JUMP:
-          address += instruction.getOffset();
-          break;
         case CALL:
           pushReturn(address + 1, instruction.getMatcher());
           address += instruction.getOffset();
@@ -159,6 +156,9 @@ public class Machine implements NativeMatcherContext {
           index = stack.index;
           stack = stack.parent;
           // jump
+          address += instruction.getOffset();
+          break;
+        case JUMP:
           address += instruction.getOffset();
           break;
         case END:

@@ -20,10 +20,14 @@
 package org.sonar.sslr.internal.matchers;
 
 import org.sonar.sslr.grammar.GrammarException;
+import org.sonar.sslr.internal.vm.AbstractCompilableMatcher;
+import org.sonar.sslr.internal.vm.CompilableMatcher;
+import org.sonar.sslr.internal.vm.Instr;
+import org.sonar.sslr.internal.vm.NativeMatcher;
 
 import java.util.regex.Pattern;
 
-public class PatternMatcher implements Matcher {
+public class PatternMatcher extends AbstractCompilableMatcher implements Matcher, CompilableMatcher, NativeMatcher {
 
   private final java.util.regex.Matcher matcher;
 
@@ -43,6 +47,25 @@ public class PatternMatcher implements Matcher {
     if (result && matcher.end() != 0) {
       context.advanceIndex(matcher.end());
       context.createNode();
+    }
+    return result;
+  }
+
+  public Instr[] compile() {
+    return new Instr[] {Instr.native_call(this)};
+  }
+
+  public boolean execute(NativeMatcherContext context) {
+    matcher.reset(context);
+    boolean result;
+    try {
+      result = matcher.lookingAt();
+    } catch (StackOverflowError e) {
+      throw new GrammarException(e, "The regular expression '" + matcher.pattern().pattern() + "' has led to a stack overflow error."
+          + " This error is certainly due to an inefficient use of alternations. See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5050507");
+    }
+    if (result && matcher.end() != 0) {
+      context.advanceIndex(matcher.end());
     }
     return result;
   }

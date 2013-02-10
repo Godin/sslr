@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.vm;
 
 import org.junit.Test;
+import org.sonar.sslr.internal.matchers.TestNotMatcher;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -29,7 +30,7 @@ public class NextNotExpressionTest {
 
   @Test
   public void test() {
-    Instr[] instructions = Instr.appendEnd(new NextNotExpression(new CharExpression('a')).compile());
+    Instr[] instructions = Instr.appendEnd(new TestNotMatcher(new CharExpression('a')).compile());
     assertThat(new Machine("a", instructions).execute()).isFalse();
     assertThat(new Machine("b", instructions).execute()).isTrue();
   }

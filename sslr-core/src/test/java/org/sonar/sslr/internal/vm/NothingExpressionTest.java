@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.vm;
 
 import org.junit.Test;
+import org.sonar.sslr.internal.matchers.NothingMatcher;
 import org.sonar.sslr.internal.vm.Instr.Opcode;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -28,7 +29,7 @@ public class NothingExpressionTest {
 
   @Test
   public void test_compile() {
-    Instr[] instructions = new NothingExpression().compile();
+    Instr[] instructions = new NothingMatcher().compile();
     assertThat(instructions).hasSize(1);
     assertThat(instructions[0].getOpcode()).isEqualTo(Opcode.FAIL);
   }

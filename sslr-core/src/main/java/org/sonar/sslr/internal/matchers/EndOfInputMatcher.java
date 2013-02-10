@@ -19,10 +19,16 @@
  */
 package org.sonar.sslr.internal.matchers;
 
+import org.sonar.sslr.internal.vm.Instr;
+
 public class EndOfInputMatcher implements Matcher {
 
   public boolean match(MatcherContext context) {
     return context.length() == 0;
+  }
+
+  public Instr[] compile() {
+    return new Instr[] {Instr.endOfInput()};
   }
 
 }

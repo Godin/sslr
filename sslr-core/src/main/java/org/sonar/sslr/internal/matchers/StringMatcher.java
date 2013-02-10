@@ -19,7 +19,12 @@
  */
 package org.sonar.sslr.internal.matchers;
 
-public class StringMatcher implements Matcher {
+import org.sonar.sslr.internal.vm.AbstractCompilableMatcher;
+import org.sonar.sslr.internal.vm.CompilableMatcher;
+import org.sonar.sslr.internal.vm.Instr;
+import org.sonar.sslr.internal.vm.NativeMatcher;
+
+public class StringMatcher extends AbstractCompilableMatcher implements Matcher, CompilableMatcher, NativeMatcher {
 
   private final String string;
 
@@ -38,6 +43,23 @@ public class StringMatcher implements Matcher {
     }
     context.advanceIndex(string.length());
     context.createNode();
+    return true;
+  }
+
+  public Instr[] compile() {
+    return new Instr[] {Instr.native_call(this)};
+  }
+
+  public boolean execute(NativeMatcherContext context) {
+    if (context.length() < string.length()) {
+      return false;
+    }
+    for (int i = 0; i < string.length(); i++) {
+      if (context.charAt(i) != string.charAt(i)) {
+        return false;
+      }
+    }
+    context.advanceIndex(string.length());
     return true;
   }
 

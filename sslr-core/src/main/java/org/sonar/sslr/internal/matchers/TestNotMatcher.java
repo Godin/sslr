@@ -19,6 +19,8 @@
  */
 package org.sonar.sslr.internal.matchers;
 
+import org.sonar.sslr.internal.vm.Instr;
+
 /**
  * A {@link Matcher} that tries its submatcher against the input.
  * Succeeds if submatcher fails.
@@ -37,6 +39,32 @@ public class TestNotMatcher implements Matcher {
       return false;
     }
     return true;
+  }
+
+  /**
+   * <pre>
+   * Choice L1
+   * subExpression
+   * FailTwice
+   * L1: ...
+   * </pre>
+   *
+   * Without instruction FailTwice:
+   * <pre>
+   * Choice L2
+   * subExpression
+   * Commit L1
+   * L1: Fail
+   * L2: ...
+   * </pre>
+   */
+  public Instr[] compile() {
+    Instr[] instr = subMatcher.compile();
+    Instr[] result = new Instr[instr.length + 2];
+    result[0] = Instr.choice(result.length);
+    System.arraycopy(instr, 0, result, 1, instr.length);
+    result[instr.length + 1] = Instr.failTwice();
+    return result;
   }
 
 }

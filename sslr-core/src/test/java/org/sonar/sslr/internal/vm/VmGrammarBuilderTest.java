@@ -24,6 +24,20 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonar.sslr.grammar.GrammarRuleKey;
+import org.sonar.sslr.internal.matchers.EndOfInputMatcher;
+import org.sonar.sslr.internal.matchers.FirstOfMatcher;
+import org.sonar.sslr.internal.matchers.Matcher;
+import org.sonar.sslr.internal.matchers.NothingMatcher;
+import org.sonar.sslr.internal.matchers.OneOrMoreMatcher;
+import org.sonar.sslr.internal.matchers.OptionalMatcher;
+import org.sonar.sslr.internal.matchers.PatternMatcher;
+import org.sonar.sslr.internal.matchers.SequenceMatcher;
+import org.sonar.sslr.internal.matchers.StringMatcher;
+import org.sonar.sslr.internal.matchers.TestMatcher;
+import org.sonar.sslr.internal.matchers.TestNotMatcher;
+import org.sonar.sslr.internal.matchers.TokenMatcher;
+import org.sonar.sslr.internal.matchers.TriviaMatcher;
+import org.sonar.sslr.internal.matchers.ZeroOrMoreMatcher;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -35,46 +49,46 @@ public class VmGrammarBuilderTest {
 
   @Test
   public void test() {
-    CompilableMatcher e1 = mock(CompilableMatcher.class);
-    CompilableMatcher e2 = mock(CompilableMatcher.class);
-    CompilableMatcher e3 = mock(CompilableMatcher.class);
+    Matcher e1 = mock(Matcher.class);
+    Matcher e2 = mock(Matcher.class);
+    Matcher e3 = mock(Matcher.class);
     VmGrammarBuilder b = VmGrammarBuilder.create();
 
     assertThat(VmGrammarBuilder.convertToExpression(e1)).isSameAs(e1);
-    assertThat(VmGrammarBuilder.convertToExpression("")).isInstanceOf(StringExpression.class);
-    assertThat(VmGrammarBuilder.convertToExpression('c')).isInstanceOf(StringExpression.class);
+    assertThat(VmGrammarBuilder.convertToExpression("")).isInstanceOf(StringMatcher.class);
+    assertThat(VmGrammarBuilder.convertToExpression('c')).isInstanceOf(StringMatcher.class);
     assertThat(VmGrammarBuilder.convertToExpression(mock(GrammarRuleKey.class))).isInstanceOf(RuleRefExpression.class);
 
-    assertThat(b.sequence(e1, e2)).isInstanceOf(SequenceExpression.class);
-    assertThat(b.sequence(e1, e2, e3)).isInstanceOf(SequenceExpression.class);
+    assertThat(b.sequence(e1, e2)).isInstanceOf(SequenceMatcher.class);
+    assertThat(b.sequence(e1, e2, e3)).isInstanceOf(SequenceMatcher.class);
 
-    assertThat(b.firstOf(e1, e2)).isInstanceOf(FirstOfExpression.class);
-    assertThat(b.firstOf(e1, e2, e3)).isInstanceOf(FirstOfExpression.class);
+    assertThat(b.firstOf(e1, e2)).isInstanceOf(FirstOfMatcher.class);
+    assertThat(b.firstOf(e1, e2, e3)).isInstanceOf(FirstOfMatcher.class);
 
-    assertThat(b.optional(e1)).isInstanceOf(OptionalExpression.class);
-    assertThat(b.optional(e1, e2)).isInstanceOf(OptionalExpression.class);
+    assertThat(b.optional(e1)).isInstanceOf(OptionalMatcher.class);
+    assertThat(b.optional(e1, e2)).isInstanceOf(OptionalMatcher.class);
 
-    assertThat(b.oneOrMore(e1)).isInstanceOf(SequenceExpression.class);
-    assertThat(b.oneOrMore(e1, e2)).isInstanceOf(SequenceExpression.class);
+    assertThat(b.oneOrMore(e1)).isInstanceOf(OneOrMoreMatcher.class);
+    assertThat(b.oneOrMore(e1, e2)).isInstanceOf(OneOrMoreMatcher.class);
 
-    assertThat(b.zeroOrMore(e1)).isInstanceOf(ZeroOrMoreExpression.class);
-    assertThat(b.zeroOrMore(e1, e2)).isInstanceOf(ZeroOrMoreExpression.class);
+    assertThat(b.zeroOrMore(e1)).isInstanceOf(ZeroOrMoreMatcher.class);
+    assertThat(b.zeroOrMore(e1, e2)).isInstanceOf(ZeroOrMoreMatcher.class);
 
-    assertThat(b.next(e1)).isInstanceOf(NextExpression.class);
-    assertThat(b.next(e1, e2)).isInstanceOf(NextExpression.class);
+    assertThat(b.next(e1)).isInstanceOf(TestMatcher.class);
+    assertThat(b.next(e1, e2)).isInstanceOf(TestMatcher.class);
 
-    assertThat(b.nextNot(e1)).isInstanceOf(NextNotExpression.class);
-    assertThat(b.nextNot(e1, e2)).isInstanceOf(NextNotExpression.class);
+    assertThat(b.nextNot(e1)).isInstanceOf(TestNotMatcher.class);
+    assertThat(b.nextNot(e1, e2)).isInstanceOf(TestNotMatcher.class);
 
-    assertThat(b.nothing()).isInstanceOf(NothingExpression.class);
+    assertThat(b.nothing()).isInstanceOf(NothingMatcher.class);
 
-    assertThat(b.regexp("")).isInstanceOf(PatternExpression.class);
+    assertThat(b.regexp("")).isInstanceOf(PatternMatcher.class);
 
-    assertThat(b.endOfInput()).isInstanceOf(EndOfInputExpression.class);
+    assertThat(b.endOfInput()).isInstanceOf(EndOfInputMatcher.class);
 
-    assertThat(b.token(mock(TokenType.class), e1)).isSameAs(e1);
-    assertThat(b.commentTrivia(e1)).isSameAs(e1);
-    assertThat(b.skippedTrivia(e1)).isSameAs(e1);
+    assertThat(b.token(mock(TokenType.class), e1)).isInstanceOf(TokenMatcher.class);
+    assertThat(b.commentTrivia(e1)).isInstanceOf(TriviaMatcher.class);
+    assertThat(b.skippedTrivia(e1)).isInstanceOf(TriviaMatcher.class);
   }
 
   @Test

@@ -33,6 +33,7 @@ public class CompiledExpressionGrammarTest {
     String inputString = "20 * ( 2 + 2 ) - var";
     char[] input = inputString.toCharArray();
     ParsingResult result = parseRunner.parse(input);
+    assertThat(result.isMatched()).isTrue();
     ParseTreePrinter.print(result.getParseTreeRoot(), input);
 
     assertThat(ParseTreePrinter.leafsToString(result.getParseTreeRoot(), input))

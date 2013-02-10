@@ -19,6 +19,8 @@
  */
 package org.sonar.sslr.internal.matchers;
 
+import org.sonar.sslr.internal.vm.Instr;
+
 /**
  * A {@link Matcher} that never succeeds.
  */
@@ -26,6 +28,10 @@ public class NothingMatcher implements Matcher {
 
   public boolean match(MatcherContext context) {
     return false;
+  }
+
+  public Instr[] compile() {
+    return new Instr[] {Instr.fail()};
   }
 
 }

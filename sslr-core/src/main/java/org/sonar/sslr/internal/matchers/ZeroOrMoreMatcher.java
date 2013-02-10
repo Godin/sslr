@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.matchers;
 
 import org.sonar.sslr.grammar.GrammarException;
+import org.sonar.sslr.internal.vm.Instr;
 
 /**
  * A {@link Matcher} that repeatedly tries its submatcher against the input.
@@ -44,6 +45,25 @@ public class ZeroOrMoreMatcher implements Matcher {
     }
     context.skipNode();
     return true;
+  }
+
+  /**
+   * <pre>
+   * L1: Choice L2
+   * subExpression
+   * Commit L1
+   * L2: ...
+   * </pre>
+   *
+   * TODO paper says that it can be optimized by introduction of new instruction PartialCommit
+   */
+  public Instr[] compile() {
+    Instr[] p = subMatcher.compile();
+    Instr[] result = new Instr[p.length + 2];
+    result[0] = Instr.choice(p.length + 2);
+    System.arraycopy(p, 0, result, 1, p.length);
+    result[p.length + 1] = Instr.commitVerify(-1 - p.length);
+    return result;
   }
 
 }

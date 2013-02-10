@@ -19,6 +19,8 @@
  */
 package org.sonar.sslr.internal.matchers;
 
+import org.sonar.sslr.internal.vm.Instr;
+
 /**
  * A {@link Matcher} that tries its submatcher once against the input.
  * Always succeeds.
@@ -35,6 +37,24 @@ public class OptionalMatcher implements Matcher {
     context.getSubContext(subMatcher).runMatcher();
     context.skipNode();
     return true;
+  }
+
+  /**
+   * Not described in paper
+   * </pre>
+   * Choice L1
+   * subExpression
+   * Commit L1
+   * L1: ...
+   * </pre>
+   */
+  public Instr[] compile() {
+    Instr[] instr = subMatcher.compile();
+    Instr[] result = new Instr[instr.length + 2];
+    result[0] = Instr.choice(result.length);
+    System.arraycopy(instr, 0, result, 1, instr.length);
+    result[instr.length + 1] = Instr.commit(1);
+    return result;
   }
 
 }

@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.vm;
 
 import org.junit.Test;
+import org.sonar.sslr.internal.matchers.SequenceMatcher;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -30,7 +31,7 @@ public class SequenceExpressionTest {
     CharExpression p1 = new CharExpression('b');
     CharExpression p2 = new CharExpression('a');
     CharExpression p3 = new CharExpression('r');
-    Instr[] instr = Instr.appendEnd(new SequenceExpression(p1, p2, p3).compile());
+    Instr[] instr = Instr.appendEnd(new SequenceMatcher(p1, p2, p3).compile());
     assertThat(new Machine("bar", instr).execute()).isTrue();
     assertThat(new Machine("foo", instr).execute()).isFalse();
   }

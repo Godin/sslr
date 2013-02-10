@@ -24,12 +24,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.sonar.sslr.grammar.GrammarException;
+import org.sonar.sslr.internal.matchers.OneOrMoreMatcher;
 import org.sonar.sslr.internal.matchers.OptionalMatcher;
-import org.sonar.sslr.internal.matchers.ZeroOrMoreMatcher;
 
 import static org.fest.assertions.Assertions.assertThat;
 
-public class ZeroOrMoreExpressionTest {
+public class OneOrMoreExpressionTest {
 
   @Rule
   public Timeout timeout = new Timeout(5000);
@@ -40,15 +40,15 @@ public class ZeroOrMoreExpressionTest {
   @Test
   public void test() {
     CharExpression a = new CharExpression('a');
-    Instr[] instructions = Instr.appendEnd(new ZeroOrMoreMatcher(a).compile());
-    assertThat(new Machine("", instructions).execute()).isTrue();
+    Instr[] instructions = Instr.appendEnd(new OneOrMoreMatcher(a).compile());
+    assertThat(new Machine("", instructions).execute()).isFalse();
     assertThat(new Machine("a", instructions).execute()).isTrue();
     assertThat(new Machine("aa", instructions).execute()).isTrue();
   }
 
   @Test
   public void should_check_that_moves_forward() {
-    Instr[] instructions = Instr.appendEnd(new ZeroOrMoreMatcher(new OptionalMatcher(new CharExpression('a'))).compile());
+    Instr[] instructions = Instr.appendEnd(new OneOrMoreMatcher(new OptionalMatcher(new CharExpression('a'))).compile());
     thrown.expect(GrammarException.class);
     thrown.expectMessage("The inner part of ZeroOrMore must not allow empty matches");
     new Machine("", instructions).execute();

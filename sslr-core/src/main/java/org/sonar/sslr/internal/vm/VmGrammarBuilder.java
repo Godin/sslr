@@ -22,8 +22,23 @@ package org.sonar.sslr.internal.vm;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sonar.sslr.api.TokenType;
+import com.sonar.sslr.api.Trivia.TriviaKind;
 import org.sonar.sslr.grammar.GrammarRuleBuilder;
 import org.sonar.sslr.grammar.GrammarRuleKey;
+import org.sonar.sslr.internal.matchers.EndOfInputMatcher;
+import org.sonar.sslr.internal.matchers.FirstOfMatcher;
+import org.sonar.sslr.internal.matchers.Matcher;
+import org.sonar.sslr.internal.matchers.NothingMatcher;
+import org.sonar.sslr.internal.matchers.OneOrMoreMatcher;
+import org.sonar.sslr.internal.matchers.OptionalMatcher;
+import org.sonar.sslr.internal.matchers.PatternMatcher;
+import org.sonar.sslr.internal.matchers.SequenceMatcher;
+import org.sonar.sslr.internal.matchers.StringMatcher;
+import org.sonar.sslr.internal.matchers.TestMatcher;
+import org.sonar.sslr.internal.matchers.TestNotMatcher;
+import org.sonar.sslr.internal.matchers.TokenMatcher;
+import org.sonar.sslr.internal.matchers.TriviaMatcher;
+import org.sonar.sslr.internal.matchers.ZeroOrMoreMatcher;
 import org.sonar.sslr.internal.vm.Instr.Opcode;
 
 import java.util.List;
@@ -81,98 +96,92 @@ public class VmGrammarBuilder {
   }
 
   public Object sequence(Object e1, Object e2) {
-    return new SequenceExpression(convertToExpression(e1), convertToExpression(e2));
+    return new SequenceMatcher(convertToExpression(e1), convertToExpression(e2));
   }
 
   public Object sequence(Object e1, Object e2, Object... rest) {
-    return new SequenceExpression(convertToExpressions(Lists.asList(e1, e2, rest)));
+    return new SequenceMatcher(convertToExpressions(Lists.asList(e1, e2, rest)));
   }
 
   public Object firstOf(Object e1, Object e2) {
-    return new FirstOfExpression(convertToExpression(e1), convertToExpression(e2));
+    return new FirstOfMatcher(convertToExpression(e1), convertToExpression(e2));
   }
 
   public Object firstOf(Object e1, Object e2, Object... rest) {
-    return new FirstOfExpression(convertToExpressions(Lists.asList(e1, e2, rest)));
+    return new FirstOfMatcher(convertToExpressions(Lists.asList(e1, e2, rest)));
   }
 
   public Object optional(Object e) {
-    return new OptionalExpression(convertToExpression(e));
+    return new OptionalMatcher(convertToExpression(e));
   }
 
   public Object optional(Object e1, Object... rest) {
-    return new OptionalExpression(new SequenceExpression(convertToExpressions(Lists.asList(e1, rest))));
+    return new OptionalMatcher(new SequenceMatcher(convertToExpressions(Lists.asList(e1, rest))));
   }
 
   public Object oneOrMore(Object e) {
-    // not described in paper
-    CompilableMatcher subMatcher = convertToExpression(e);
-    return new SequenceExpression(subMatcher, new ZeroOrMoreExpression(subMatcher));
+    return new OneOrMoreMatcher(convertToExpression(e));
   }
 
   public Object oneOrMore(Object e1, Object... rest) {
-    return oneOrMore(new SequenceExpression(convertToExpressions(Lists.asList(e1, rest))));
+    return new OneOrMoreMatcher(new SequenceMatcher(convertToExpressions(Lists.asList(e1, rest))));
   }
 
   public Object zeroOrMore(Object e) {
-    return new ZeroOrMoreExpression(convertToExpression(e));
+    return new ZeroOrMoreMatcher(convertToExpression(e));
   }
 
   public Object zeroOrMore(Object e1, Object... rest) {
-    return new ZeroOrMoreExpression(new SequenceExpression(convertToExpressions(Lists.asList(e1, rest))));
+    return new ZeroOrMoreMatcher(new SequenceMatcher(convertToExpressions(Lists.asList(e1, rest))));
   }
 
   public Object next(Object e) {
-    return new NextExpression(convertToExpression(e));
+    return new TestMatcher(convertToExpression(e));
   }
 
   public Object next(Object e1, Object... rest) {
-    return new NextExpression(new SequenceExpression(convertToExpressions(Lists.asList(e1, rest))));
+    return new TestMatcher(new SequenceMatcher(convertToExpressions(Lists.asList(e1, rest))));
   }
 
   public Object nextNot(Object e) {
-    return new NextNotExpression(convertToExpression(e));
+    return new TestNotMatcher(convertToExpression(e));
   }
 
   public Object nextNot(Object e1, Object... rest) {
-    return new NextNotExpression(new SequenceExpression(convertToExpressions(Lists.asList(e1, rest))));
+    return new TestNotMatcher(new SequenceMatcher(convertToExpressions(Lists.asList(e1, rest))));
   }
 
   public Object nothing() {
-    return new NothingExpression();
+    return new NothingMatcher();
   }
 
   public Object regexp(String regexp) {
-    return new PatternExpression(regexp);
+    return new PatternMatcher(regexp);
   }
 
   public Object endOfInput() {
-    return new EndOfInputExpression();
+    return new EndOfInputMatcher();
   }
 
   public Object token(TokenType tokenType, Object e) {
-    // TODO
-    return convertToExpression(e);
+    return new TokenMatcher(tokenType, convertToExpression(e));
   }
 
   public Object commentTrivia(Object e) {
-    // TODO
-    return convertToExpression(e);
+    return new TriviaMatcher(TriviaKind.COMMENT, convertToExpression(e));
   }
 
   public Object skippedTrivia(Object e) {
-    // TODO
-    return convertToExpression(e);
+    return new TriviaMatcher(TriviaKind.SKIPPED_TEXT, convertToExpression(e));
   }
 
-  static CompilableMatcher convertToExpression(Object e) {
+  static Matcher convertToExpression(Object e) {
     if (e instanceof CompilableMatcher) {
-      return (CompilableMatcher) e;
-    } else if (e instanceof Character) {
-      return new StringExpression(((Character) e).toString());
-      // return new CharExpression((Character) e);
+      return (Matcher) e;
     } else if (e instanceof String) {
-      return new StringExpression((String) e);
+      return new StringMatcher((String) e);
+    } else if (e instanceof Character) {
+      return new StringMatcher(((Character) e).toString());
     } else if (e instanceof GrammarRuleKey) {
       return new RuleRefExpression((GrammarRuleKey) e);
     } else {
@@ -180,8 +189,8 @@ public class VmGrammarBuilder {
     }
   }
 
-  static CompilableMatcher[] convertToExpressions(List<Object> expressions) {
-    CompilableMatcher[] result = new CompilableMatcher[expressions.size()];
+  static Matcher[] convertToExpressions(List<Object> expressions) {
+    Matcher[] result = new Matcher[expressions.size()];
     for (int i = 0; i < expressions.size(); i++) {
       result[i] = convertToExpression(expressions.get(i));
     }

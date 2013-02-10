@@ -19,6 +19,12 @@
  */
 package org.sonar.sslr.internal.matchers;
 
+import com.google.common.collect.Lists;
+import org.sonar.sslr.internal.vm.CompilableMatcher;
+import org.sonar.sslr.internal.vm.Instr;
+
+import java.util.List;
+
 /**
  * A {@link Matcher} that executes all of its submatchers in sequence.
  * Succeeds only if all submatchers succeed.
@@ -45,6 +51,28 @@ public class SequenceMatcher implements Matcher {
     Matcher[] result = new Matcher[subMatchers.length];
     System.arraycopy(subMatchers, 0, result, 0, subMatchers.length);
     return result;
+  }
+
+  /**
+   * <pre>
+   * subExpressions[0]
+   * subExpressions[1]
+   * subExpressions[2]
+   * ...
+   * </pre>
+   */
+  public Instr[] compile() {
+    List<Instr> result = Lists.newArrayList();
+    for (CompilableMatcher subExpression : subMatchers) {
+      addAll(result, subExpression.compile());
+    }
+    return result.toArray(new Instr[result.size()]);
+  }
+
+  private static void addAll(List<Instr> list, Instr[] array) {
+    for (Instr i : array) {
+      list.add(i);
+    }
   }
 
 }

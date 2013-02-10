@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.vm;
 
 import org.junit.Test;
+import org.sonar.sslr.internal.matchers.FirstOfMatcher;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -30,7 +31,7 @@ public class FirstOfExpressionTest {
     CharExpression a = new CharExpression('a');
     CharExpression b = new CharExpression('b');
     CharExpression c = new CharExpression('c');
-    Instr[] instructions = Instr.appendEnd(new FirstOfExpression(a, b, c).compile());
+    Instr[] instructions = Instr.appendEnd(new FirstOfMatcher(a, b, c).compile());
     assertThat(new Machine("a", instructions).execute()).isTrue();
     assertThat(new Machine("b", instructions).execute()).isTrue();
     assertThat(new Machine("c", instructions).execute()).isTrue();

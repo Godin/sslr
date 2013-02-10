@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import org.sonar.sslr.grammar.GrammarException;
 import org.sonar.sslr.grammar.GrammarRuleBuilder;
 import org.sonar.sslr.grammar.GrammarRuleKey;
+import org.sonar.sslr.internal.matchers.SequenceMatcher;
 
 // TODO should create node
 public class RuleExpression extends AbstractCompilableMatcher implements CompilableMatcher, GrammarRuleBuilder {
@@ -59,7 +60,7 @@ public class RuleExpression extends AbstractCompilableMatcher implements Compila
   }
 
   public GrammarRuleBuilder is(Object e, Object... rest) {
-    return is(new SequenceExpression(VmGrammarBuilder.convertToExpressions(Lists.asList(e, rest))));
+    return is(new SequenceMatcher(VmGrammarBuilder.convertToExpressions(Lists.asList(e, rest))));
   }
 
   public GrammarRuleBuilder override(Object e) {
@@ -68,7 +69,7 @@ public class RuleExpression extends AbstractCompilableMatcher implements Compila
   }
 
   public GrammarRuleBuilder override(Object e, Object... rest) {
-    return override(new SequenceExpression(VmGrammarBuilder.convertToExpressions(Lists.asList(e, rest))));
+    return override(new SequenceMatcher(VmGrammarBuilder.convertToExpressions(Lists.asList(e, rest))));
   }
 
   public void skip() {

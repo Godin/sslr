@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.vm;
 
 import org.junit.Test;
+import org.sonar.sslr.internal.matchers.PatternMatcher;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -27,7 +28,7 @@ public class PatternExpressionTest {
 
   @Test(timeout = 5000)
   public void test() {
-    Instr[] instr = Instr.appendEnd(new PatternExpression("(?:foo|bar)").compile());
+    Instr[] instr = Instr.appendEnd(new PatternMatcher("(?:foo|bar)").compile());
     assertThat(new Machine("foo", instr).execute()).isTrue();
     assertThat(new Machine("bar", instr).execute()).isTrue();
     assertThat(new Machine("baz", instr).execute()).isFalse();

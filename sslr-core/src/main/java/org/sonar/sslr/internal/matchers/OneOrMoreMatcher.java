@@ -20,6 +20,7 @@
 package org.sonar.sslr.internal.matchers;
 
 import org.sonar.sslr.grammar.GrammarException;
+import org.sonar.sslr.internal.vm.Instr;
 
 /**
  * A {@link Matcher} that repeatedly tries its submatcher against the input.
@@ -47,6 +48,11 @@ public class OneOrMoreMatcher implements Matcher {
     }
     context.skipNode();
     return true;
+  }
+
+  public Instr[] compile() {
+    // not described in paper
+    return new SequenceMatcher(new Matcher[] {subMatcher, new ZeroOrMoreMatcher(subMatcher)}).compile();
   }
 
 }
