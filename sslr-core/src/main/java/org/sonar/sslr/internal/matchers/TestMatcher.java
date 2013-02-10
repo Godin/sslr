@@ -42,6 +42,7 @@ public class TestMatcher implements Matcher {
   }
 
   /**
+   * Compiles this expression into a set of instructions:
    * <pre>
    * Choice L1
    * subExpression
@@ -50,11 +51,11 @@ public class TestMatcher implements Matcher {
    * L2: ...
    * </pre>
    *
-   * Without instruction "BackCommit":
+   * Should be noted that can be compiled without usage instruction "BackCommit":
    * <pre>
    * Choice L1
    * Choice L2
-   * <p>
+   * subExpression
    * L2: Commit L3
    * L3: Fail
    * L1: ...

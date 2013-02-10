@@ -27,6 +27,12 @@ public class EndOfInputMatcher implements Matcher {
     return context.length() == 0;
   }
 
+  /**
+   * Compiles this expression into a set of instructions:
+   * <pre>
+   * EndOfInput
+   * </pre>
+   */
   public Instr[] compile() {
     return new Instr[] {Instr.endOfInput()};
   }

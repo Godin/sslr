@@ -44,6 +44,12 @@ public class StringMatcher extends NativeMatcher implements Matcher {
     return true;
   }
 
+  /**
+   * Compiles this expression into a set of instructions:
+   * <pre>
+   * NativeCall this
+   * </pre>
+   */
   public Instr[] compile() {
     return new Instr[] {Instr.native_call(this)};
   }

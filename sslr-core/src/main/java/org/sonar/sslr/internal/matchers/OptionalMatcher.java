@@ -40,7 +40,7 @@ public class OptionalMatcher implements Matcher {
   }
 
   /**
-   * Not described in paper
+   * Compiles this expression into a set of instructions:
    * </pre>
    * Choice L1
    * subExpression
@@ -49,6 +49,7 @@ public class OptionalMatcher implements Matcher {
    * </pre>
    */
   public Instr[] compile() {
+    // not described in paper
     Instr[] instr = subMatcher.compile();
     Instr[] result = new Instr[instr.length + 2];
     result[0] = Instr.choice(result.length);

@@ -47,6 +47,7 @@ public class FirstOfMatcher implements Matcher {
   }
 
   /**
+   * Compiles this expression into a set of instructions:
    * <pre>
    * Choice L1
    * subExpression[0]

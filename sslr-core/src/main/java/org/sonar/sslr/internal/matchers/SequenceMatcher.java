@@ -54,6 +54,7 @@ public class SequenceMatcher implements Matcher {
   }
 
   /**
+   * Compiles this expression into a set of instructions:
    * <pre>
    * subExpressions[0]
    * subExpressions[1]

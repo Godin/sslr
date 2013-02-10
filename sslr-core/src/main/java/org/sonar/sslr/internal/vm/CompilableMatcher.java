@@ -21,6 +21,9 @@ package org.sonar.sslr.internal.vm;
 
 public interface CompilableMatcher {
 
+  /**
+   * Compiles this expression into a set of instructions.
+   */
   Instr[] compile();
 
 }

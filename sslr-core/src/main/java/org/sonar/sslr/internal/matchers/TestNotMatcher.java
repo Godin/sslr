@@ -42,6 +42,7 @@ public class TestNotMatcher implements Matcher {
   }
 
   /**
+   * Compiles this expression into a set of instructions:
    * <pre>
    * Choice L1
    * subExpression
@@ -49,7 +50,7 @@ public class TestNotMatcher implements Matcher {
    * L1: ...
    * </pre>
    *
-   * Without instruction FailTwice:
+   * Should be noted that can be compiled without usage instruction "FailTwice":
    * <pre>
    * Choice L2
    * subExpression

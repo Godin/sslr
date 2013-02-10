@@ -50,6 +50,16 @@ public class OneOrMoreMatcher implements Matcher {
     return true;
   }
 
+  /**
+   * Compiles this expression into a set of instructions:
+   * <pre>
+   * subExpresson
+   * L1: Choice L2
+   * subExpression
+   * Commit L1
+   * L2: ...
+   * </pre>
+   */
   public Instr[] compile() {
     // not described in paper
     return new SequenceMatcher(new Matcher[] {subMatcher, new ZeroOrMoreMatcher(subMatcher)}).compile();

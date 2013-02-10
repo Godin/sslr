@@ -48,16 +48,16 @@ public class ZeroOrMoreMatcher implements Matcher {
   }
 
   /**
+   * Compiles this expression into a set of instructions:
    * <pre>
    * L1: Choice L2
    * subExpression
    * Commit L1
    * L2: ...
    * </pre>
-   *
-   * TODO paper says that it can be optimized by introduction of new instruction PartialCommit
    */
   public Instr[] compile() {
+    // TODO paper says that it can be optimized by introduction of new instruction PartialCommit
     Instr[] p = subMatcher.compile();
     Instr[] result = new Instr[p.length + 2];
     result[0] = Instr.choice(p.length + 2);

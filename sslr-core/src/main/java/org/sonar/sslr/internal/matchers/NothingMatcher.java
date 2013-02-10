@@ -30,6 +30,12 @@ public class NothingMatcher implements Matcher {
     return false;
   }
 
+  /**
+   * Compiles this expression into a set of instructions:
+   * <pre>
+   * Fail
+   * </pre>
+   */
   public Instr[] compile() {
     return new Instr[] {Instr.fail()};
   }

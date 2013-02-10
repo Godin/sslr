@@ -49,6 +49,12 @@ public class PatternMatcher extends NativeMatcher implements Matcher {
     return result;
   }
 
+  /**
+   * Compiles this expression into a set of instructions:
+   * <pre>
+   * NativeCall this
+   * </pre>
+   */
   public Instr[] compile() {
     return new Instr[] {Instr.native_call(this)};
   }
