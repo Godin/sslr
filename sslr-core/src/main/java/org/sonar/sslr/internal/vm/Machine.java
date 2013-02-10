@@ -30,13 +30,16 @@ import org.sonar.sslr.internal.vm.NativeMatcher.NativeMatcherContext;
 import java.util.Arrays;
 import java.util.List;
 
+// TODO no need to have position-independent code after full compilation of grammar
+// so can replace offsets by absolute values
 public class Machine implements NativeMatcherContext {
 
   private final char[] input;
   private final Instr[] instructions;
 
   // TODO check what is cheaper (space-time tradeoff):
-  // 1. allocate big array of all possible addresses
+  // 0. reserve first instruction in callee to store this information (mutable instructions?)
+  // 1. allocate big array of all possible addresses like now (estimate size)
   // 2. relocate calls to the top of list of instructions using instruction "Jump"
   // 3. use Map from GrammarRuleKey
   private final int[] calls;

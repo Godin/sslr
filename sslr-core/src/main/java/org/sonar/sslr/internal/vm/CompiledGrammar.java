@@ -26,6 +26,7 @@ import java.util.Map;
 public class CompiledGrammar {
 
   private final Map<GrammarRuleKey, RuleExpression> rules;
+  // TODO Is there more efficient way to store this information? I.e. without primitive wrappers.
   private final Map<GrammarRuleKey, Integer> offsets;
   private final Instr[] instructions;
 

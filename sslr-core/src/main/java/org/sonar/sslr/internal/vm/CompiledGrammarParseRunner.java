@@ -32,6 +32,7 @@ public class CompiledGrammarParseRunner {
     Instr[] instr = grammar.getInstructions();
     this.instructions = new Instr[instr.length + 2];
 
+    // TODO no need to create those instructions - just ask machine to push element into the stack before execution
     instructions[0] = Instr.call(grammar.getOffset(ruleKey) + 2, grammar.getMatcher(ruleKey));
     instructions[1] = Instr.end();
     System.arraycopy(instr, 0, instructions, 2, instr.length);
