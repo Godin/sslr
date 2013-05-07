@@ -21,7 +21,7 @@ package org.sonar.sslr.internal.vm;
 
 public class OptionalExpression implements ParsingExpression {
 
-  private final ParsingExpression subExpression;
+  final ParsingExpression subExpression;
 
   public OptionalExpression(ParsingExpression subExpression) {
     this.subExpression = subExpression;

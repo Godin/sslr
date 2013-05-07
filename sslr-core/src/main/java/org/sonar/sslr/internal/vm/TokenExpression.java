@@ -25,7 +25,7 @@ import org.sonar.sslr.internal.matchers.Matcher;
 public class TokenExpression implements Matcher, ParsingExpression {
 
   private final TokenType tokenType;
-  private final ParsingExpression subExpression;
+  final ParsingExpression subExpression;
 
   public TokenExpression(TokenType tokenType, ParsingExpression subExpression) {
     this.tokenType = tokenType;

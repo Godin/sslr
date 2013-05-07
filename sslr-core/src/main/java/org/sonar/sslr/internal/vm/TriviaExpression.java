@@ -25,7 +25,7 @@ import org.sonar.sslr.internal.matchers.Matcher;
 public class TriviaExpression implements Matcher, ParsingExpression {
 
   private final TriviaKind triviaKind;
-  private final ParsingExpression subExpression;
+  final ParsingExpression subExpression;
 
   public TriviaExpression(TriviaKind triviaKind, ParsingExpression subExpression) {
     this.triviaKind = triviaKind;

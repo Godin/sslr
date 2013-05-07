@@ -21,7 +21,7 @@ package org.sonar.sslr.internal.vm;
 
 public class OneOrMoreExpression implements ParsingExpression {
 
-  private final ParsingExpression subExpression;
+  final ParsingExpression subExpression;
 
   public OneOrMoreExpression(ParsingExpression subExpression) {
     this.subExpression = subExpression;

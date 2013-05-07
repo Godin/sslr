@@ -21,7 +21,7 @@ package org.sonar.sslr.internal.vm;
 
 public class NextNotExpression implements ParsingExpression {
 
-  private final ParsingExpression subExpression;
+  final ParsingExpression subExpression;
 
   public NextNotExpression(ParsingExpression subExpression) {
     this.subExpression = subExpression;

@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 public class FirstOfExpression implements ParsingExpression {
 
-  private final ParsingExpression[] subExpressions;
+  final ParsingExpression[] subExpressions;
 
   public FirstOfExpression(ParsingExpression... subExpressions) {
     this.subExpressions = subExpressions;

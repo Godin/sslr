@@ -26,7 +26,7 @@ import java.util.List;
 
 public class SequenceExpression implements ParsingExpression {
 
-  private final ParsingExpression[] subExpressions;
+  final ParsingExpression[] subExpressions;
 
   public SequenceExpression(ParsingExpression... subExpressions) {
     this.subExpressions = subExpressions;
