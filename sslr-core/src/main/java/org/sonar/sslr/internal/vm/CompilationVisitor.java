@@ -38,9 +38,9 @@ public class CompilationVisitor {
   private final Map<GrammarRuleKey, CompilableGrammarRule> matchers = Maps.newHashMap();
   private final Map<GrammarRuleKey, Integer> offsets = Maps.newHashMap();
 
-  private CompiledGrammar doCompile(CompilableGrammarRule start) {
-    List<Instruction> instructions = Lists.newArrayList();
+  private final List<Instruction> instructions = Lists.newArrayList();
 
+  private CompiledGrammar doCompile(CompilableGrammarRule start) {
     // Compile
 
     compilationQueue.add(start);
@@ -51,7 +51,9 @@ public class CompilationVisitor {
       GrammarRuleKey ruleKey = rule.getRuleKey();
 
       offsets.put(ruleKey, instructions.size());
-      Instruction.addAll(instructions, compile(rule.getExpression()));
+
+      compile(rule.getExpression());
+
       instructions.add(Instruction.ret());
     }
 
@@ -71,40 +73,41 @@ public class CompilationVisitor {
     return new CompiledGrammar(result, matchers, start.getRuleKey(), offsets.get(start.getRuleKey()));
   }
 
-  public Instruction[] compile(ParsingExpression expression) {
+  public void compile(ParsingExpression expression) {
     if (expression instanceof SequenceExpression) {
-      return compileSequence((SequenceExpression) expression);
+      compileSequence((SequenceExpression) expression);
     } else if (expression instanceof FirstOfExpression) {
-      return compileFirstOf((FirstOfExpression) expression);
+      compileFirstOf((FirstOfExpression) expression);
     } else if (expression instanceof OptionalExpression) {
-      return compileOptional((OptionalExpression) expression);
+      compileOptional((OptionalExpression) expression);
     } else if (expression instanceof OneOrMoreExpression) {
-      return compileOneOrMore((OneOrMoreExpression) expression);
+      compileOneOrMore((OneOrMoreExpression) expression);
     } else if (expression instanceof ZeroOrMoreExpression) {
-      return compileZeroOrMore((ZeroOrMoreExpression) expression);
+      compileZeroOrMore((ZeroOrMoreExpression) expression);
     } else if (expression instanceof NextExpression) {
-      return compileNext((NextExpression) expression);
+      compileNext((NextExpression) expression);
     } else if (expression instanceof NextNotExpression) {
-      return compileNextNot((NextNotExpression) expression);
+      compileNextNot((NextNotExpression) expression);
     } else if (expression instanceof NativeExpression) {
-      return compileNative((NativeExpression) expression);
+      compileNative((NativeExpression) expression);
     } else if (expression instanceof CompilableGrammarRule) {
-      return compileRule((CompilableGrammarRule) expression);
+      compileRule((CompilableGrammarRule) expression);
     } else if (expression instanceof TokenExpression) {
-      return compileToken((TokenExpression) expression);
+      compileToken((TokenExpression) expression);
     } else if (expression instanceof TriviaExpression) {
-      return compileTrivia((TriviaExpression) expression);
+      compileTrivia((TriviaExpression) expression);
     } else {
-      throw new IllegalArgumentException("Unexpected expression: " + expression.getClass());
+      Instruction.addAll(instructions, expression.compile(null));
+//      throw new IllegalArgumentException("Unexpected expression: " + expression.getClass());
     }
   }
 
-  public Instruction[] compileRule(CompilableGrammarRule rule) {
+  public void compileRule(CompilableGrammarRule rule) {
     if (!matchers.containsKey(rule.getRuleKey())) {
       compilationQueue.add(rule);
       matchers.put(rule.getRuleKey(), rule);
     }
-    return new Instruction[]{new RuleRefExpression(rule.getRuleKey())};
+    instructions.add(new RuleRefExpression(rule.getRuleKey()));
   }
 
   /**
@@ -117,8 +120,8 @@ public class CompilationVisitor {
    * L2: ...
    * </pre>
    */
-  public Instruction[] compileTrivia(TriviaExpression expression) {
-    return compileTokenOrTrivia(expression, expression.subExpression);
+  public void compileTrivia(TriviaExpression expression) {
+    compileTokenOrTrivia(expression, expression.subExpression);
   }
 
   /**
@@ -131,20 +134,20 @@ public class CompilationVisitor {
    * L2: ...
    * </pre>
    */
-  public Instruction[] compileToken(TokenExpression expression) {
-    return compileTokenOrTrivia(expression, expression.subExpression);
+  public void compileToken(TokenExpression expression) {
+    compileTokenOrTrivia(expression, expression.subExpression);
   }
 
   public Instruction[] compileTokenOrTrivia(Matcher expression, ParsingExpression subExpression) {
     // TODO maybe can be optimized
-    Instruction[] instr = compile(subExpression);
-    Instruction[] result = new Instruction[instr.length + 4];
-    result[0] = Instruction.call(2, expression);
-    result[1] = Instruction.jump(instr.length + 3);
-    result[2] = Instruction.ignoreErrors();
-    System.arraycopy(instr, 0, result, 3, instr.length);
-    result[3 + instr.length] = Instruction.ret();
-    return result;
+    instructions.add(Instruction.call(2, expression));
+    int start = instructions.size();
+    instructions.add(null); // reserve space for "Jump L"
+    instructions.add(Instruction.ignoreErrors());
+    compile(subExpression);
+    instructions.add(Instruction.ret());
+    instructions.set(start, Instruction.jump(instructions.size() - start)); // fill "Jump L"
+    return null;
   }
 
   /**
@@ -156,12 +159,10 @@ public class CompilationVisitor {
    * ...
    * </pre>
    */
-  public Instruction[] compileSequence(SequenceExpression expression) {
-    List<Instruction> result = Lists.newArrayList();
+  public void compileSequence(SequenceExpression expression) {
     for (ParsingExpression subExpression : expression.subExpressions) {
-      Instruction.addAll(result, compile(subExpression));
+      compile(subExpression);
     }
-    return result.toArray(new Instruction[result.size()]);
   }
 
   /**
@@ -180,28 +181,23 @@ public class CompilationVisitor {
    * E: ...
    * </pre>
    */
-  public Instruction[] compileFirstOf(FirstOfExpression expression) {
+  public void compileFirstOf(FirstOfExpression expression) {
     ParsingExpression[] subExpressions = expression.subExpressions;
 
-    int index = 0;
-    Instruction[][] sub = new Instruction[subExpressions.length][];
-    for (int i = 0; i < subExpressions.length; i++) {
-      sub[i] = compile(subExpressions[i]);
-      index += sub[i].length;
-    }
-    Instruction[] result = new Instruction[index + (subExpressions.length - 1) * 2];
-
-    index = 0;
+    int s = instructions.size();
     for (int i = 0; i < subExpressions.length - 1; i++) {
-      result[index] = Instruction.choice(sub[i].length + 2);
-      System.arraycopy(sub[i], 0, result, index + 1, sub[i].length);
-      index += sub[i].length + 1;
-      result[index] = Instruction.commit(result.length - index);
-      index++;
+      int start = instructions.size();
+      instructions.add(null); // reserve space for "Choice L"
+      compile(subExpressions[i]);
+      instructions.add(null); // reserve space for "Commit E"
+      instructions.set(start, Instruction.choice(instructions.size() - start)); // fill "Choice L"
     }
-    System.arraycopy(sub[sub.length - 1], 0, result, index, sub[sub.length - 1].length);
-
-    return result;
+    compile(subExpressions[subExpressions.length - 1]);
+    for (int i = instructions.size() - 1; i > s; i--) {
+      if (instructions.get(i) == null) {
+        instructions.set(i, Instruction.commit(instructions.size() - i)); // fill "Commit E"
+      }
+    }
   }
 
   /**
@@ -213,14 +209,13 @@ public class CompilationVisitor {
    * L1: ...
    * </pre>
    */
-  public Instruction[] compileOptional(OptionalExpression expression) {
+  public void compileOptional(OptionalExpression expression) {
     // not described in paper
-    Instruction[] instr = compile(expression.subExpression);
-    Instruction[] result = new Instruction[instr.length + 2];
-    result[0] = Instruction.choice(result.length);
-    System.arraycopy(instr, 0, result, 1, instr.length);
-    result[instr.length + 1] = Instruction.commit(1);
-    return result;
+    int start = instructions.size();
+    instructions.add(null); // reserve space for "Choice L"
+    compile(expression.subExpression);
+    instructions.add(Instruction.commit(1));
+    instructions.set(start, Instruction.choice(instructions.size() - start)); // fill "Choice L"
   }
 
   /**
@@ -243,16 +238,15 @@ public class CompilationVisitor {
    * L2: ...
    * </pre>
    */
-  public Instruction[] compileOneOrMore(OneOrMoreExpression expression) {
-    Instruction[] sub = compile(expression.subExpression);
-    Instruction[] result = new Instruction[sub.length + 5];
-    result[0] = Instruction.choice(sub.length + 4);
-    System.arraycopy(sub, 0, result, 1, sub.length);
-    result[sub.length + 1] = Instruction.commitVerify(1);
-    result[sub.length + 2] = Instruction.choice(3);
-    result[sub.length + 3] = Instruction.jump(-2 - sub.length);
-    result[sub.length + 4] = Instruction.backtrack();
-    return result;
+  public void compileOneOrMore(OneOrMoreExpression expression) {
+    int start = instructions.size();
+    instructions.add(null); // reserve space for "Choice L"
+    compile(expression.subExpression);
+    instructions.add(Instruction.commitVerify(1));
+    instructions.add(Instruction.choice(3));
+    instructions.add(Instruction.jump(start - instructions.size() + 1));
+    instructions.set(start, Instruction.choice(instructions.size() - start)); // fill "Choice L"
+    instructions.add(Instruction.backtrack());
   }
 
   /**
@@ -264,14 +258,13 @@ public class CompilationVisitor {
    * L2: ...
    * </pre>
    */
-  public Instruction[] compileZeroOrMore(ZeroOrMoreExpression expression) {
+  public void compileZeroOrMore(ZeroOrMoreExpression expression) {
     // TODO maybe can be optimized by introduction of new instruction PartialCommit
-    Instruction[] sub = compile(expression.subExpression);
-    Instruction[] result = new Instruction[sub.length + 2];
-    result[0] = Instruction.choice(sub.length + 2);
-    System.arraycopy(sub, 0, result, 1, sub.length);
-    result[sub.length + 1] = Instruction.commitVerify(-1 - sub.length);
-    return result;
+    int start = instructions.size();
+    instructions.add(null); // reserve space for "Choice L"
+    compile(expression.subExpression);
+    instructions.add(Instruction.commitVerify(start - instructions.size()));
+    instructions.set(start, Instruction.choice(instructions.size() - start)); // fill "Choice L"
   }
 
   /**
@@ -293,14 +286,14 @@ public class CompilationVisitor {
    * L1: ...
    * </pre>
    */
-  public Instruction[] compileNext(NextExpression expression) {
-    Instruction[] sub = compile(expression.subExpression);
-    Instruction[] result = new Instruction[sub.length + 3];
-    result[0] = Instruction.choice(result.length - 1);
-    System.arraycopy(sub, 0, result, 1, sub.length);
-    result[sub.length + 1] = Instruction.backCommit(2);
-    result[sub.length + 2] = Instruction.backtrack();
-    return result;
+  public void compileNext(NextExpression expression) {
+    int start = instructions.size();
+    instructions.add(null); // reserve space for "Choice L"
+    compile(expression.subExpression);
+    instructions.add(Instruction.backCommit(2));
+    // TODO why not predicateChoice?
+    instructions.set(start, Instruction.choice(instructions.size() - start)); // fill "Choice L"
+    instructions.add(Instruction.backtrack());
   }
 
   /**
@@ -320,20 +313,19 @@ public class CompilationVisitor {
    * L2: ...
    * </pre>
    */
-  public Instruction[] compileNextNot(NextNotExpression expression) {
-    Instruction[] sub = compile(expression.subExpression);
-    Instruction[] result = new Instruction[sub.length + 2];
-    result[0] = Instruction.predicateChoice(sub.length + 2);
-    System.arraycopy(sub, 0, result, 1, sub.length);
-    result[sub.length + 1] = Instruction.failTwice();
-    return result;
+  public void compileNextNot(NextNotExpression expression) {
+    int start = instructions.size();
+    instructions.add(null); // reserve space for "Choice L"
+    compile(expression.subExpression);
+    instructions.add(Instruction.failTwice());
+    instructions.set(start, Instruction.predicateChoice(instructions.size() - start)); // fill "Choice L"
   }
 
   /**
    * Compiles {@link NativeExpression}.
    */
-  public Instruction[] compileNative(NativeExpression expression) {
-    return new Instruction[]{expression};
+  public void compileNative(NativeExpression expression) {
+    instructions.add(expression);
   }
 
 }

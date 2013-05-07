@@ -30,7 +30,9 @@ import java.util.Queue;
 public class MutableGrammarCompiler extends CompilationHandler {
 
   public static CompiledGrammar compile(CompilableGrammarRule rule) {
-    return new MutableGrammarCompiler().doCompile(rule);
+    return CompilationVisitor.compile(rule);
+
+//    return new MutableGrammarCompiler().doCompile(rule);
   }
 
   private final Queue<CompilableGrammarRule> compilationQueue = Lists.newLinkedList();
