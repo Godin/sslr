@@ -28,8 +28,6 @@ public class PascalGrammarTest {
   private Grammar g = PascalGrammar.create();
 
   {
-    g.rule(PascalGrammar.EXPRESSION).mock();
-    g.rule(PascalGrammar.BOOLEAN_EXPRESSION).mock();
     g.rule(PascalGrammar.LABEL).mock();
     g.rule(PascalGrammar.VARIABLE_ACCESS).mock();
     g.rule(PascalGrammar.FUNCTION_IDENTIFIER).mock();
@@ -54,6 +52,7 @@ public class PascalGrammarTest {
 
   @Test
   public void assignment_statement() {
+    g.rule(PascalGrammar.EXPRESSION).mock();
     assertThat(g.rule(PascalGrammar.ASSIGNMENT_STATEMENT))
       .matches("VARIABLE_ACCESS := EXPRESSION")
       .matches("FUNCTION_IDENTIFIER := EXPRESSION");
@@ -80,6 +79,7 @@ public class PascalGrammarTest {
 
   @Test
   public void if_statement() {
+    g.rule(PascalGrammar.BOOLEAN_EXPRESSION).mock();
     g.rule(PascalGrammar.STATEMENT).mock();
     assertThat(g.rule(PascalGrammar.IF_STATEMENT))
       .matches("if BOOLEAN_EXPRESSION then STATEMENT")
@@ -88,6 +88,7 @@ public class PascalGrammarTest {
 
   @Test
   public void repeat_statement() {
+    g.rule(PascalGrammar.BOOLEAN_EXPRESSION).mock();
     g.rule(PascalGrammar.STATEMENT).mock();
     assertThat(g.rule(PascalGrammar.REPEAT_STATEMENT))
       .matches("repeat STATEMENT until BOOLEAN_EXPRESSION")
@@ -96,9 +97,100 @@ public class PascalGrammarTest {
 
   @Test
   public void while_statement() {
+    g.rule(PascalGrammar.BOOLEAN_EXPRESSION).mock();
     g.rule(PascalGrammar.STATEMENT).mock();
     assertThat(g.rule(PascalGrammar.WHILE_STATEMENT))
       .matches("while BOOLEAN_EXPRESSION do STATEMENT");
+  }
+
+  @Test
+  public void for_statement() {
+    g.rule(PascalGrammar.EXPRESSION).mock();
+    g.rule(PascalGrammar.STATEMENT).mock();
+    g.rule(PascalGrammar.CONTROL_VARIABLE).mock();
+    assertThat(g.rule(PascalGrammar.FOR_STATEMENT))
+      .matches("for CONTROL_VARIABLE := EXPRESSION to EXPRESSION do STATEMENT")
+      .matches("for CONTROL_VARIABLE := EXPRESSION downto EXPRESSION do STATEMENT");
+  }
+
+  @Test
+  public void relational_operator() {
+    assertThat(g.rule(PascalGrammar.RELATIONAL_OPERATOR))
+      .matches("= ")
+      .matches("<> ")
+      .matches("<= ")
+      .matches(">= ")
+      .matches("< ")
+      .matches("> ")
+      .matches("in ");
+  }
+
+  @Test
+  public void expression() {
+    assertThat(g.rule(PascalGrammar.EXPRESSION))
+      .matches("1 = 2 ");
+  }
+
+  @Test
+  public void adding_operator() {
+    assertThat(g.rule(PascalGrammar.ADDING_OPERATOR))
+      .matches("+ ")
+      .matches("- ")
+      .matches("or ");
+  }
+
+  @Test
+  public void simple_expression() {
+    assertThat(g.rule(PascalGrammar.SIMPLE_EXPRESSION))
+      .matches("1 + 2 ");
+  }
+
+  @Test
+  public void multiplying_operator() {
+    assertThat(g.rule(PascalGrammar.MULTIPLYING_OPERATOR))
+      .matches("* ")
+      .matches("/ ")
+      .matches("div ")
+      .matches("mod ")
+      .matches("and ");
+  }
+
+  @Test
+  public void term() {
+    assertThat(g.rule(PascalGrammar.TERM))
+      .matches("1 * 2 ");
+  }
+
+  @Test
+  public void unsigned_integer() {
+    assertThat(g.rule(PascalGrammar.UNSIGNED_INTEGER))
+      .matches("0 ")
+      .matches("42 ");
+  }
+
+  @Test
+  public void unsigned_real() {
+    assertThat(g.rule(PascalGrammar.UNSIGNED_REAL))
+      .matches("1.2 ")
+      .matches("1.2e+3 ")
+      .matches("1e-2 ")
+      .notMatches("1 ");
+  }
+
+  @Test
+  public void character_string() {
+    assertThat(g.rule(PascalGrammar.CHARACTER_STRING))
+      .matches("'' ")
+      .matches("'foo' ");
+  }
+
+  @Test
+  public void factor() {
+    assertThat(g.rule(PascalGrammar.FACTOR))
+      .matches("42 ")
+      .matches("not 42 ")
+      .matches("( 42 ) ")
+      .matches("identifier");
   }
 
 }
