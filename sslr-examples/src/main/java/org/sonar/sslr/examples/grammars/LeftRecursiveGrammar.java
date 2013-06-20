@@ -36,6 +36,89 @@ public enum LeftRecursiveGrammar implements GrammarRuleKey {
   A, B, T1, T2, S1, S2;
 
   /**
+   * From http://ironmeta.sourceforge.net/Left-Recursion%20in%20PEGs.pdf
+   */
+  public static Grammar simple() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(
+      b.sequence(A, "a"),
+      "b"
+    ));
+    return b.build();
+  }
+
+  /**
+   * From http://arxiv.org/pdf/1207.0443v1.pdf
+   */
+  public static Grammar usual() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(
+      b.sequence(A, "+", B),
+      b.sequence(A, "-", B),
+      B
+    ));
+    b.rule(B).is(b.firstOf(
+      "n",
+      b.sequence("(", A, ")")
+    ));
+    return b.build();
+  }
+
+  /**
+   * From http://arxiv.org/pdf/1207.0443v1.pdf
+   * This grammar generates "x" and "x" followed by any number of "(n)" or ".x", as long as it ends with ".x".
+   */
+  public static Grammar lValues() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(
+      b.sequence(B, ".x"),
+      "x"
+    ));
+    b.rule(B).is(b.firstOf(
+      b.sequence(B, "(n)"),
+      A
+    ));
+    return b.build();
+  }
+
+  public static Grammar leftAndRightRecursive() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(
+      b.sequence(A, "+", A),
+      "n"
+    ));
+    return b.build();
+  }
+
+  public static Grammar ford1() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(A);
+    return b.build();
+  }
+
+  public static Grammar ford2() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(A, "a"));
+    return b.build();
+  }
+
+  public static Grammar ford3() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(B, "a"));
+    b.rule(B).is(b.firstOf(A, b.next("a")));
+    return b.build();
+  }
+
+  public static Grammar ford4() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(
+      b.sequence(A, "aa"),
+      "a",
+      b.nothing()));
+    return b.build();
+  }
+
+  /**
    * @see #eliminatedImmediateLeftRecursion()
    */
   public static Grammar immediateLeftRecursion() {

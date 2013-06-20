@@ -302,11 +302,7 @@ public abstract class Instruction {
   public static final class RetInstruction extends Instruction {
     @Override
     public void execute(Machine machine) {
-      machine.createNode();
-      MachineStack stack = machine.peek();
-      machine.setIgnoreErrors(stack.isIgnoreErrors());
-      machine.setAddress(stack.address());
-      machine.popReturn();
+      machine.ret();
     }
 
     @Override

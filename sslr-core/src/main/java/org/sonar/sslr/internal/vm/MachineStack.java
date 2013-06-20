@@ -127,4 +127,12 @@ public class MachineStack {
     return subNodes;
   }
 
+  /**
+   * Replacement for {@link #leftRecursion}
+   */
+  MachineStack leftRecursion2;
+
+  ParseNode memo;
+  boolean leftRecursionDetected;
+
 }

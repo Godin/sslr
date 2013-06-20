@@ -20,6 +20,7 @@
 package org.sonar.sslr.examples.grammars;
 
 import com.sonar.sslr.api.Grammar;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -33,6 +34,53 @@ public class LeftRecursiveGrammarTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
+  @Test
+  public void test() {
+    assertThat(LeftRecursiveGrammar.simple().rule(LeftRecursiveGrammar.A))
+      .matches("b")
+      .matches("ba")
+      .matches("baa");
+
+    assertThat(LeftRecursiveGrammar.usual().rule(LeftRecursiveGrammar.A))
+      .matches("n")
+      .matches("n+n")
+      .matches("n+n+n")
+      .matches("n+(n-n+n)-n");
+
+    assertThat(LeftRecursiveGrammar.leftAndRightRecursive().rule(LeftRecursiveGrammar.A))
+      .matches("n")
+      .matches("n+n")
+      .matches("n+n+n");
+  }
+
+  @Test
+  public void lValues() {
+    assertThat(LeftRecursiveGrammar.lValues().rule(LeftRecursiveGrammar.A))
+      .matches("x")
+      .matches("x.x")
+      .matches("x.x.x")
+      .matches("x(n).x")
+      .matches("x(n)(n).x")
+      .matches("x(n)(n).x(n).x");
+  }
+
+  @Test
+  public void ford() {
+    assertThat(LeftRecursiveGrammar.ford1().rule(LeftRecursiveGrammar.A))
+      .notMatches("");
+    assertThat(LeftRecursiveGrammar.ford2().rule(LeftRecursiveGrammar.A))
+      .matches("a")
+      .notMatches("aa");
+    assertThat(LeftRecursiveGrammar.ford3().rule(LeftRecursiveGrammar.A))
+      .notMatches("a");
+    assertThat(LeftRecursiveGrammar.ford3().rule(LeftRecursiveGrammar.B))
+      .matches("a");
+    assertThat(LeftRecursiveGrammar.ford4().rule(LeftRecursiveGrammar.A))
+      .matches("aaa")
+      .notMatches("aaaa");
+  }
+
+  @Ignore
   @Test
   public void should_detect_immediate_left_recursion() {
     Grammar grammar = LeftRecursiveGrammar.immediateLeftRecursion();
@@ -57,6 +105,7 @@ public class LeftRecursiveGrammarTest {
       .matches("s2t2t1");
   }
 
+  @Ignore
   @Test
   public void should_detect_indirect_left_recursion() {
     Grammar grammar = LeftRecursiveGrammar.indirectLeftRecursion();

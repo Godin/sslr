@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.sonar.sslr.api.RecognitionException;
 import com.sonar.sslr.api.Token;
-import org.sonar.sslr.grammar.GrammarException;
 import org.sonar.sslr.internal.grammar.MutableParsingRule;
 import org.sonar.sslr.internal.matchers.ImmutableInputBuffer;
 import org.sonar.sslr.internal.matchers.InputBuffer;
@@ -35,7 +34,6 @@ import org.sonar.sslr.internal.vm.lexerful.LexerfulParseErrorFormatter;
 import org.sonar.sslr.parser.ParseError;
 import org.sonar.sslr.parser.ParsingResult;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class Machine implements CharSequence {
@@ -52,7 +50,8 @@ public class Machine implements CharSequence {
   private final ParseNode[] memos;
 
   // Number of instructions in grammar for Java is about 2000.
-  private final int[] calls;
+//  private final int[] calls;
+  private final MachineStack[] calls;
 
   private final MachineHandler handler;
 
@@ -103,6 +102,8 @@ public class Machine implements CharSequence {
           machine.stack.subNodes().get(0),
           null);
     } else {
+      System.out.println("Second run");
+
       // Perform second run in order to collect information for error report
       ErrorReportingHandler errorReportingHandler = new ErrorReportingHandler(errorLocatingHandler.getErrorIndex());
       machine = new Machine(input, null, instructions, errorReportingHandler);
@@ -175,8 +176,8 @@ public class Machine implements CharSequence {
     this.stack = new MachineStack();
     stack = stack.getOrCreateChild();
     stack.setIndex(-1);
-    calls = new int[instructions.length];
-    Arrays.fill(calls, -1);
+    calls = new MachineStack[instructions.length];
+//    Arrays.fill(calls, -1);
   }
 
   private static final MachineHandler NOP_HANDLER = new MachineHandler() {
@@ -217,7 +218,7 @@ public class Machine implements CharSequence {
   }
 
   public void popReturn() {
-    calls[stack.calledAddress()] = stack.leftRecursion();
+    calls[stack.calledAddress()] = stack.leftRecursion2;
     stack = stack.parent();
   }
 
@@ -232,13 +233,59 @@ public class Machine implements CharSequence {
       stack.setMatcher(matcher);
       address += callOffset;
 
-      if (calls[address] == index) {
-        // TODO better message, e.g. dump stack
-        throw new GrammarException("Left recursion has been detected, involved rule: " + matcher.toString());
-      }
+      MachineStack previousCall = calls[address];
       stack.setCalledAddress(address);
-      stack.setLeftRecursion(calls[address]);
-      calls[address] = index;
+      stack.leftRecursion2 = calls[address];
+      calls[address] = stack;
+
+      stack.leftRecursionDetected = false;
+
+      if (previousCall != null && previousCall.index() == index) {
+        if (previousCall.memo == null) {
+          previousCall.leftRecursionDetected = true;
+          System.out.println("LR bound=0 for " + matcher + " at " + index + " => fail");
+          backtrack();
+        } else {
+          System.out.println("LR bound>0 for " + matcher + " at " + index + " => return memo till " + previousCall.memo.getEndIndex());
+          stack.parent().subNodes().add(previousCall.memo);
+          index = previousCall.memo.getEndIndex();
+          setAddress(stack.address());
+          popReturn();
+        }
+      }
+    }
+  }
+
+  public void ret() {
+    MachineStack call = calls[stack.calledAddress()];
+    // TODO Godin: call == null for root rule, but I think that should not
+    if (call != null && call.leftRecursionDetected) {
+      System.out.print(call.matcher() + " matched to " + index + " => ");
+      if (call.memo == null || call.memo.getEndIndex() < index) {
+        System.out.println("increase bound");
+        // increase bound
+        call.memo = new ParseNode(stack.index(), index, stack.subNodes(), stack.matcher());
+        stack.subNodes().clear();
+        setIndex(stack.index());
+        setAddress(stack.calledAddress());
+      } else {
+        System.out.println("done and return memo till " + call.memo.getEndIndex());
+        // done
+        // note that usual memoization not used
+        stack.parent().subNodes().add(call.memo);
+        setIndex(call.memo.getEndIndex());
+        call.memo = null;
+        MachineStack stack = peek();
+        setIgnoreErrors(stack.isIgnoreErrors());
+        setAddress(stack.address());
+        popReturn();
+      }
+    } else {
+      createNode();
+      MachineStack stack = peek();
+      setIgnoreErrors(stack.isIgnoreErrors());
+      setAddress(stack.address());
+      popReturn();
     }
   }
 
