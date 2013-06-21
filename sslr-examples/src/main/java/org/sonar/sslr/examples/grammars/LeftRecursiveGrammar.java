@@ -66,6 +66,22 @@ public enum LeftRecursiveGrammar implements GrammarRuleKey {
 
   /**
    * From http://arxiv.org/pdf/1207.0443v1.pdf
+   */
+  public static Grammar complex() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(
+      b.sequence(B, "+", A),
+      B
+    ));
+    b.rule(B).is(b.firstOf(
+      b.sequence(B, "-n"),
+      "n"
+    ));
+    return b.build();
+  }
+
+  /**
+   * From http://arxiv.org/pdf/1207.0443v1.pdf
    * This grammar generates "x" and "x" followed by any number of "(n)" or ".x", as long as it ends with ".x".
    */
   public static Grammar lValues() {

@@ -47,6 +47,10 @@ public class LeftRecursiveGrammarTest {
       .matches("n+n+n")
       .matches("n+(n-n+n)-n");
 
+    assertThat(LeftRecursiveGrammar.complex().rule(LeftRecursiveGrammar.A))
+      .matches("n+n+n")
+      .matches("n-n-n");
+
     assertThat(LeftRecursiveGrammar.leftAndRightRecursive().rule(LeftRecursiveGrammar.A))
       .matches("n")
       .matches("n+n")
