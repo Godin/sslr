@@ -106,6 +106,16 @@ public enum LeftRecursiveGrammar implements GrammarRuleKey {
     return b.build();
   }
 
+  public static Grammar memo() {
+    LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
+    b.rule(A).is(b.firstOf(
+      b.sequence(B, "+n"),
+      "n"
+    ));
+    b.rule(B).is(A);
+    return b.build();
+  }
+
   public static Grammar ford1() {
     LexerlessGrammarBuilder b = LexerlessGrammarBuilder.create();
     b.rule(A).is(A);

@@ -69,6 +69,14 @@ public class LeftRecursiveGrammarTest {
   }
 
   @Test
+  public void memo() {
+    assertThat(LeftRecursiveGrammar.memo().rule(LeftRecursiveGrammar.A))
+      .matches("n")
+      .matches("n+n")
+      .matches("n+n+n");
+  }
+
+  @Test
   public void ford() {
     assertThat(LeftRecursiveGrammar.ford1().rule(LeftRecursiveGrammar.A))
       .notMatches("");

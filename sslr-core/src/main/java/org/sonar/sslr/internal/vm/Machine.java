@@ -336,7 +336,8 @@ public class Machine implements CharSequence {
     ParseNode node = new ParseNode(stack.index(), index, stack.subNodes(), stack.matcher());
     stack.parent().subNodes().add(node);
     if (stack.matcher() instanceof MemoParsingExpression && ((MemoParsingExpression) stack.matcher()).shouldMemoize()) {
-      memos[stack.index()] = node;
+      // FIXME disable memo, because of conflicts with implementation of left recursion
+//      memos[stack.index()] = node;
     }
   }
 

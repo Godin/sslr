@@ -198,6 +198,7 @@ public class MachineTest {
     assertThat(node.getChildren()).hasSize(2);
   }
 
+  @Ignore
   @Test
   public void should_use_memo() {
     Machine machine = new Machine("foo", new Instruction[3]);
